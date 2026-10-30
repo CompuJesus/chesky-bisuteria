@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import ws from 'ws';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -11,7 +12,15 @@ const isSupabaseConfigured = Boolean(supabaseUrl && supabaseKey);
 
 let supabase = null;
 if (isSupabaseConfigured) {
-  supabase = createClient(supabaseUrl, supabaseKey);
+  supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+    realtime: {
+      transport: ws,
+    },
+  });
 }
 
 /**

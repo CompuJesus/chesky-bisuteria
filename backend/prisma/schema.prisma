@@ -1,12 +1,12 @@
 // Prisma Schema para Sistema de Inventario y Catálogo Web de Bisutería
-// Soporta SQLite (desarrollo local) y PostgreSQL (producción en Neon/Supabase/Render)
+// Configurado para PostgreSQL (Supabase en la nube y producción)
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = env("DATABASE_PROVIDER")
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
