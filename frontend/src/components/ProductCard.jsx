@@ -1,14 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-export const ProductCard = ({ articulo, whatsappPhone = '584120000000' }) => {
+export const ProductCard = ({ articulo, config = {} }) => {
+  const [copiado, setCopiado] = useState(false);
   const isAgotado = articulo.stock === 0 || articulo.estado === 'Agotado';
 
-  // Mensaje exacto requerido por las especificaciones de negocio
-  const mensajeWhatsApp = `¡Hola! Me interesa este producto: ${articulo.nombre} - SKU: ${articulo.sku} - Precio: $${parseFloat(articulo.pvp).toFixed(2)}`;
-  const enlaceWhatsApp = `https://wa.me/${whatsappPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(mensajeWhatsApp)}`;
+  const phone = config.whatsappPhone || '584120000000';
+  const plantilla = config.mensajePlantilla || '¡Hola! Me interesa este producto: {nombre} - SKU: {sku} - Precio: ${pvp}';
+
+  const pvpNum = parseFloat(articulo.pvp) || 0;
+  const pvpFormateado = pvpNum.toFixed(2);
+
+  // Reemplazar etiquetas dinámicas en el mensaje
+  const mensajeWhatsApp = plantilla
+    .replace('{nombre}', articulo.nombre)
+    .replace('{sku}', articulo.sku)
+    .replace('{pvp}', pvpFormateado);
+
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  const enlaceWhatsApp = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensajeWhatsApp)}`;
+
+  // Cálculo en moneda secundaria (Bs.) si está activa
+  const tieneMonedaSecundaria = config.monedaSecundariaActiva && config.tasaCambio > 0;
+  const precioBs = tieneMonedaSecundaria
+    ? (pvpNum * config.tasaCambio).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : null;
+
+  const copiarTextoVenta = () => {
+    const texto = `💎 *${articulo.nombre}*\n✨ SKU: ${articulo.sku}\n🏷️ Precio: $${pvpFormateado}${precioBs ? ` (${config.monedaSecundariaSimbolo || 'Bs.'} ${precioBs})` : ''}\n📦 Stock: ${articulo.stock > 0 ? `${articulo.stock} disponibles` : 'Agotado'}\n\n📝 ${articulo.descripcion}\n\n📲 Pídelo al WhatsApp: +${cleanPhone}`;
+    navigator.clipboard.writeText(texto);
+    setCopiado(true);
+    setTimeout(() => setCopiado(false), 2000);
+  };
 
   return (
-    <div className="group relative bg-white rounded-2xl overflow-hidden border border-stone-200/80 hover:border-gold-300 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+    <div className="group relative bg-white rounded-2xl overflow-hidden border border-stone-200/80 hover:border-amber-400 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
       
       {/* Contenedor de la Imagen con Lazy Loading */}
       <div className="relative aspect-square w-full overflow-hidden bg-stone-100">
@@ -20,19 +45,35 @@ export const ProductCard = ({ articulo, whatsappPhone = '584120000000' }) => {
             isAgotado ? 'grayscale contrast-125 opacity-75' : ''
           }`}
           onError={(e) => {
-            // Fallback por si la imagen externa falla
             e.target.src = 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80';
           }}
         />
 
         {/* Categoría Pill */}
-        <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-md text-stone-800 text-[11px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded-full shadow-sm border border-stone-100">
+        <span className="absolute top-3 left-3 bg-white/95 backdrop-blur-md text-stone-800 text-[11px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded-full shadow-sm border border-stone-200">
           {articulo.categoria}
         </span>
 
+        {/* Botón rápido para copiar publicación de redes */}
+        <button
+          onClick={copiarTextoVenta}
+          title="Copiar texto para WhatsApp / Instagram"
+          className="absolute top-3 right-3 p-1.5 rounded-full bg-white/90 hover:bg-stone-900 hover:text-white text-stone-700 shadow-sm transition-all"
+        >
+          {copiado ? (
+            <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          )}
+        </button>
+
         {/* Sello Rojo de Agotado */}
         {isAgotado && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/45 backdrop-blur-[2px]">
             <span className="bg-red-600 text-white font-serif font-bold uppercase tracking-widest px-4 py-1.5 text-xs sm:text-sm rounded-full shadow-lg border border-red-400 rotate-[-4deg]">
               Agotado
             </span>
@@ -40,7 +81,7 @@ export const ProductCard = ({ articulo, whatsappPhone = '584120000000' }) => {
         )}
 
         {/* SKU Badge */}
-        <span className="absolute bottom-2 right-2 bg-stone-900/70 backdrop-blur-sm text-stone-200 text-[10px] font-mono px-2 py-0.5 rounded">
+        <span className="absolute bottom-2 right-2 bg-stone-900/80 backdrop-blur-sm text-stone-200 text-[10px] font-mono px-2 py-0.5 rounded">
           SKU: {articulo.sku}
         </span>
       </div>
@@ -63,9 +104,16 @@ export const ProductCard = ({ articulo, whatsappPhone = '584120000000' }) => {
             <span className="text-[10px] uppercase font-semibold text-stone-400 tracking-wider">
               Precio PVP
             </span>
-            <span className="text-xl sm:text-2xl font-bold font-serif text-stone-900">
-              ${parseFloat(articulo.pvp).toFixed(2)}
-            </span>
+            <div className="flex items-baseline space-x-1.5">
+              <span className="text-xl sm:text-2xl font-bold font-serif text-stone-900">
+                ${pvpFormateado}
+              </span>
+            </div>
+            {tieneMonedaSecundaria && (
+              <span className="text-[11px] font-semibold text-amber-800">
+                ≈ {config.monedaSecundariaSimbolo || 'Bs.'} {precioBs}
+              </span>
+            )}
           </div>
 
           {isAgotado ? (

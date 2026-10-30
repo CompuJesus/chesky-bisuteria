@@ -45,3 +45,20 @@ model Usuario {
 
   @@map("usuarios")
 }
+
+model Configuracion {
+  id                      String   @id @default(uuid())
+  whatsappPhone           String   @default("584120000000")
+  mensajePlantilla        String   @default("¡Hola! Me interesa este producto: {nombre} - SKU: {sku} - Precio: ${pvp}")
+  nombreTienda            String   @default("CHESKY Bisutería & Accesorios")
+  instagram               String   @default("@chesky.joyas")
+  monedaSecundariaActiva  Boolean  @default(false)
+  monedaSecundariaSimbolo String   @default("Bs.")
+  tasaCambio              Float    @default(0)
+  notificarBajoStock      Boolean  @default(true)
+  umbralBajoStock         Int      @default(3)
+  updatedAt               DateTime @updatedAt
+  createdAt               DateTime @default(now())
+
+  @@map("configuraciones")
+}

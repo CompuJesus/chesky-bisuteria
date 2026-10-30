@@ -123,3 +123,54 @@ export const obtenerPerfil = async (req, res, next) => {
     next(error);
   }
 };
+
+export const cambiarPassword = async (req, res, next) => {
+  try {
+    const { passwordActual, nuevoPassword } = req.body;
+
+    if (!passwordActual || !nuevoPassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'Debes proporcionar la contraseña actual y la nueva contraseña.',
+      });
+    }
+
+    if (nuevoPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'La nueva contraseña debe tener al menos 6 caracteres.',
+      });
+    }
+
+    const usuario = await prisma.usuario.findUnique({
+      where: { id: req.user.id },
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ success: false, error: 'Usuario no encontrado.' });
+    }
+
+    const passwordValido = await bcrypt.compare(passwordActual, usuario.password);
+    if (!passwordValido) {
+      return res.status(400).json({
+        success: false,
+        error: 'La contraseña actual no es correcta.',
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(nuevoPassword, salt);
+
+    await prisma.usuario.update({
+      where: { id: usuario.id },
+      data: { password: passwordHash },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Contraseña actualizada de manera segura.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};

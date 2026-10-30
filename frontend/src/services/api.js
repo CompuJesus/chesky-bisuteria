@@ -50,7 +50,12 @@ export const getPublicArticleById = async (id) => {
   return data;
 };
 
-// --- Servicios de Autenticación ---
+export const getPublicConfig = async () => {
+  const { data } = await api.get('/configuracion/publica');
+  return data;
+};
+
+// --- Servicios de Autenticación y Perfil ---
 export const loginUser = async (credentials) => {
   const { data } = await api.post('/auth/login', credentials);
   return data;
@@ -58,6 +63,11 @@ export const loginUser = async (credentials) => {
 
 export const getAuthProfile = async () => {
   const { data } = await api.get('/auth/me');
+  return data;
+};
+
+export const changeAdminPassword = async (payload) => {
+  const { data } = await api.put('/auth/cambiar-password', payload);
   return data;
 };
 
@@ -98,6 +108,17 @@ export const previewPriceCalculation = async (payload) => {
 
 export const getDashboardMetrics = async () => {
   const { data } = await api.get('/metricas');
+  return data;
+};
+
+// --- Configuración del Negocio (WhatsApp, Tasa, Tienda) ---
+export const getAdminConfig = async () => {
+  const { data } = await api.get('/configuracion');
+  return data;
+};
+
+export const updateAdminConfig = async (config) => {
+  const { data } = await api.put('/configuracion', config);
   return data;
 };
 

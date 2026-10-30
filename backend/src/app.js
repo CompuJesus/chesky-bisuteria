@@ -9,6 +9,7 @@ import authRoutes from './routes/authRoutes.js';
 import articuloRoutes from './routes/articuloRoutes.js';
 import metricasRoutes from './routes/metricasRoutes.js';
 import exportRoutes from './routes/exportRoutes.js';
+import configuracionRoutes from './routes/configuracionRoutes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -58,6 +59,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/articulos', articuloRoutes);
 app.use('/api/metricas', metricasRoutes);
 app.use('/api/exportar', exportRoutes);
+app.use('/api/configuracion', configuracionRoutes);
 
 // Manejador centralizado de errores
 app.use(errorHandler);
