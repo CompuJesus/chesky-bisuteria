@@ -101,6 +101,11 @@ export const updateArticleStatus = async (id, estado) => {
   return data;
 };
 
+export const quickUpdateStock = async (id, delta) => {
+  const { data } = await api.patch(`/articulos/${id}/stock`, { delta });
+  return data;
+};
+
 export const previewPriceCalculation = async (payload) => {
   const { data } = await api.post('/articulos/calcular-precio', payload);
   return data;

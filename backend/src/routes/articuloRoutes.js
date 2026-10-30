@@ -8,6 +8,7 @@ import {
   eliminarArticulo,
   cambiarEstado,
   previsualizarCalculoPrecio,
+  ajustarStockRapido,
 } from '../controllers/articuloController.js';
 import { verificarToken } from '../middlewares/authMiddleware.js';
 import { upload } from '../middlewares/uploadMiddleware.js';
@@ -35,6 +36,7 @@ router.get('/', listarAdmin);
 router.post('/', upload.single('imagen'), crearArticulo);
 router.put('/:id', upload.single('imagen'), actualizarArticulo);
 router.patch('/:id/estado', cambiarEstado);
+router.patch('/:id/stock', ajustarStockRapido);
 router.delete('/:id', eliminarArticulo);
 
 export default router;

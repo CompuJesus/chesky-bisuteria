@@ -4,6 +4,7 @@ import {
   getDashboardMetrics,
   deleteArticle,
   updateArticleStatus,
+  quickUpdateStock,
   downloadInventoryCSV,
   getAdminConfig,
   updateAdminConfig,
@@ -36,6 +37,7 @@ export const AdminDashboard = () => {
   const [metricsLoading, setMetricsLoading] = useState(true);
   const [guardandoConfig, setGuardandoConfig] = useState(false);
   const [mensajeExito, setMensajeExito] = useState('');
+  const [toastVenta, setToastVenta] = useState('');
 
   // Filtros
   const [categoria, setCategoria] = useState('Todas');
@@ -152,6 +154,24 @@ export const AdminDashboard = () => {
       cargarDatos();
     } catch (err) {
       alert('No se pudo actualizar el estado.');
+    }
+  };
+
+  const handleAjustarStock = async (art, delta, esVenta = false) => {
+    try {
+      const res = await quickUpdateStock(art.id, delta);
+      if (res.success) {
+        setArticulos((prev) =>
+          prev.map((item) => (item.id === art.id ? res.data : item))
+        );
+        if (esVenta) {
+          setToastVenta(`🎉 ¡Venta registrada de "${art.nombre}"! Stock restante: ${res.data.stock}`);
+          setTimeout(() => setToastVenta(''), 4000);
+        }
+        cargarMetricas();
+      }
+    } catch (err) {
+      alert(err.response?.data?.error || 'No se pudo actualizar el stock.');
     }
   };
 
@@ -475,19 +495,57 @@ export const AdminDashboard = () => {
                               ${pvp.toFixed(2)}
                             </td>
 
-                            {/* Stock */}
-                            <td className="py-3 px-3 text-center">
-                              <span
-                                className={`inline-block px-2.5 py-0.5 rounded-full font-bold text-[11px] ${
-                                  isSinStock
-                                    ? 'bg-red-100 text-red-700'
-                                    : isBajoStock
-                                    ? 'bg-amber-100 text-amber-800'
-                                    : 'bg-emerald-100 text-emerald-800'
-                                }`}
-                              >
-                                {art.stock}
-                              </span>
+                            {/* Stock con Botones de Gestión Rápida */}
+                            <td className="py-2.5 px-3 text-center">
+                              <div className="flex items-center justify-center space-x-1">
+                                <button
+                                  type="button"
+                                  disabled={art.stock === 0}
+                                  onClick={() => handleAjustarStock(art, -1)}
+                                  title="Restar 1 pieza"
+                                  className="w-5 h-5 rounded bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                >
+                                  -
+                                </button>
+
+                                <span
+                                  className={`inline-block px-2 py-0.5 rounded-full font-bold text-[11px] min-w-[28px] ${
+                                    isSinStock
+                                      ? 'bg-red-100 text-red-700'
+                                      : isBajoStock
+                                      ? 'bg-amber-100 text-amber-800'
+                                      : 'bg-emerald-100 text-emerald-800'
+                                  }`}
+                                >
+                                  {art.stock}
+                                </span>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleAjustarStock(art, +1)}
+                                  title="Sumar 1 pieza (reposición)"
+                                  className="w-5 h-5 rounded bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs flex items-center justify-center transition-all"
+                                >
+                                  +
+                                </button>
+                              </div>
+
+                              {/* Botón Rápido VENDIDO */}
+                              {art.stock > 0 ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleAjustarStock(art, -1, true)}
+                                  className="mt-1.5 inline-flex items-center space-x-1 px-2 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded text-[10px] tracking-wider uppercase shadow-sm transition-all active:scale-95 hover:scale-105"
+                                  title="Registrar 1 venta de este producto"
+                                >
+                                  <span>✓</span>
+                                  <span>Vendido</span>
+                                </button>
+                              ) : (
+                                <span className="mt-1 inline-block text-[9px] text-red-500 font-bold uppercase tracking-wider">
+                                  Sin stock
+                                </span>
+                              )}
                             </td>
 
                             {/* Estado */}
@@ -1039,6 +1097,14 @@ export const AdminDashboard = () => {
         )}
 
       </div>
+
+      {/* Notificación flotante de Venta Rápida */}
+      {toastVenta && (
+        <div className="fixed bottom-6 right-6 z-50 bg-stone-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-emerald-500/40 text-xs sm:text-sm font-semibold flex items-center space-x-2.5 transition-all">
+          <span className="p-1 bg-emerald-500 rounded-full text-white text-xs">✓</span>
+          <span>{toastVenta}</span>
+        </div>
+      )}
 
       {/* Modal para Crear y Editar Artículo */}
       <ArticleModal

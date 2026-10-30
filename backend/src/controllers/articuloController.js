@@ -483,3 +483,49 @@ export const previsualizarCalculoPrecio = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * 9. AJUSTE RÁPIDO DE STOCK (Venta / Reposición rápida con 1 clic)
+ * Permite sumar o restar stock (ej. delta: -1 para registrar venta)
+ */
+export const ajustarStockRapido = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { delta = -1 } = req.body;
+
+    const articulo = await prisma.articulo.findUnique({
+      where: { id },
+    });
+
+    if (!articulo) {
+      return res.status(404).json({ success: false, error: 'Artículo no encontrado.' });
+    }
+
+    const nuevoStock = Math.max(0, articulo.stock + parseInt(delta, 10));
+    let nuevoEstado = articulo.estado;
+
+    if (nuevoStock === 0) {
+      nuevoEstado = 'Agotado';
+    } else if (nuevoStock > 0 && articulo.estado === 'Agotado') {
+      nuevoEstado = 'Disponible';
+    }
+
+    const articuloActualizado = await prisma.articulo.update({
+      where: { id },
+      data: {
+        stock: nuevoStock,
+        estado: nuevoEstado,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: delta < 0
+        ? `¡Venta registrada! Stock restante de ${articulo.nombre}: ${nuevoStock}`
+        : `Stock de ${articulo.nombre} actualizado a ${nuevoStock}`,
+      data: articuloActualizado,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

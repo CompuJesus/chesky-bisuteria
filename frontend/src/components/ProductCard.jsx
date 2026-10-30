@@ -10,14 +10,25 @@ export const ProductCard = ({ articulo, config = {} }) => {
   const pvpNum = parseFloat(articulo.pvp) || 0;
   const pvpFormateado = pvpNum.toFixed(2);
 
-  // Reemplazar etiquetas dinámicas en el mensaje
-  const mensajeWhatsApp = plantilla
+  // Link directo al producto en el catálogo web
+  const productUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}?q=${encodeURIComponent(articulo.sku)}`
+    : '';
+
+  // Reemplazar etiquetas dinámicas en el mensaje e incluir link directo
+  let mensajeFinal = plantilla
     .replace('{nombre}', articulo.nombre)
     .replace('{sku}', articulo.sku)
     .replace('{pvp}', pvpFormateado);
 
+  if (plantilla.includes('{link}')) {
+    mensajeFinal = mensajeFinal.replace('{link}', productUrl);
+  } else {
+    mensajeFinal = `${mensajeFinal}\n\n🔗 Ver pieza: ${productUrl}`;
+  }
+
   const cleanPhone = phone.replace(/[^0-9]/g, '');
-  const enlaceWhatsApp = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensajeWhatsApp)}`;
+  const enlaceWhatsApp = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensajeFinal)}`;
 
   // Cálculo en moneda secundaria (Bs.) si está activa
   const tieneMonedaSecundaria = config.monedaSecundariaActiva && config.tasaCambio > 0;
