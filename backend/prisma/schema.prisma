@@ -1,0 +1,47 @@
+// Prisma Schema para Sistema de Inventario y Catálogo Web de Bisutería
+// Soporta SQLite (desarrollo local) y PostgreSQL (producción en Neon/Supabase/Render)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = env("DATABASE_PROVIDER")
+  url      = env("DATABASE_URL")
+}
+
+model Articulo {
+  id                 String   @id @default(uuid())
+  sku                String   @unique
+  nombre             String
+  categoria          String
+  descripcion        String   @default("")
+
+  costoBase          Float
+  utilidad           Float
+  pvp                Float
+  overridePrecio     Boolean  @default(false)
+  precioManual       Float?
+
+  stock              Int      @default(0)
+  imagenUrl          String   @default("")
+  imagenPublicId     String?
+  estado             String   @default("Disponible")
+
+  fechaActualizacion DateTime @updatedAt
+  createdAt          DateTime @default(now())
+
+  @@map("articulos")
+}
+
+model Usuario {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  nombre    String
+  password  String
+  rol       String   @default("ADMIN")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("usuarios")
+}
